@@ -6,11 +6,11 @@ import (
 
 func TestCleanInput(t *testing.T) {
 	cases := []struct {
-		input string
+		input    string
 		expected []string
 	}{
 		{
-			input: "  hello  World  ",
+			input:    "  hello  World  ",
 			expected: []string{"hello", "world"},
 		},
 	}

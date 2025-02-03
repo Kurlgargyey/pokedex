@@ -13,10 +13,12 @@ func main() {
 		scanner.Scan()
 		input := scanner.Text()
 		cleanedInput := cleanInput(input)
-		fmt.Printf("Your command was: %v\n", cleanedInput[0])
-		if cleanedInput[0] == "quit" {
-			fmt.Println("Quitting...")
-			break
+		fmt.Println("--------------------------------")
+		if cmd, ok := commands[cleanedInput[0]]; ok {
+			cmd.callback()
+		} else {
+			fmt.Println("Unknown command.")
 		}
+		fmt.Println("--------------------------------")
 	}
 }
