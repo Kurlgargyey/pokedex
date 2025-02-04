@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"pokedex/internal/pokemon_api"
 	"strings"
-
-	"github.com/mtslzr/pokeapi-go"
 )
 
 type cliCommand struct {
@@ -15,7 +14,8 @@ type cliCommand struct {
 }
 
 type config struct {
-	locationPage int
+	areasNext string
+	areasPrev string
 }
 
 var commands map[string]cliCommand
@@ -44,7 +44,8 @@ func init() {
 		description: "Displays the previous 20 locations in the world of pokemon",
 		callback:    commandMapB,
 	}
-	cfg.locationPage = 0
+	cfg.areasNext = "https://pokeapi.co/api/v2/location-area/"
+	cfg.areasPrev = ""
 }
 
 func cleanInput(text string) []string {
@@ -71,28 +72,25 @@ func commandHelp() error {
 }
 
 func commandMap() error {
-	locs, err := pokeapi.Resource("location-area", cfg.locationPage*20)
-	if err != nil {
-		return err
+	res := pokemon_api.GetAreas(cfg.areasNext)
+	cfg.areasNext = res.Next
+	cfg.areasPrev = res.Previous
+	for _, a := range res.Areas {
+		fmt.Println(a.Name)
 	}
-	for _, loc := range locs.Results {
-		fmt.Println(loc.Name)
-	}
-	cfg.locationPage++
 	return nil
 }
+
 func commandMapB() error {
-	if cfg.locationPage <= 1 {
+	if cfg.areasPrev == "" {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	cfg.locationPage-=2
-	locs, err := pokeapi.Resource("location-area", cfg.locationPage*20)
-	if err != nil {
-		return err
-	}
-	for _, loc := range locs.Results {
-		fmt.Println(loc.Name)
+	res := pokemon_api.GetAreas(cfg.areasPrev)
+	cfg.areasNext = res.Next
+	cfg.areasPrev = res.Previous
+	for _, a := range res.Areas {
+		fmt.Println(a.Name)
 	}
 	return nil
 }
