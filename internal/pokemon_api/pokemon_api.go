@@ -24,10 +24,15 @@ type areaInfo struct {
 	PokemonEncounters []Encounter `json:"pokemon_encounters"`
 }
 type Encounter struct {
-	Pokemon pokemon `json:"pokemon"`
+	Pokemon pokemonInfo `json:"pokemon"`
 }
-type pokemon struct {
+type pokemonInfo struct {
 	Name string `json:"name"`
+}
+
+type Pokemon struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
 }
 
 var cache *pokecache.Cache
@@ -92,6 +97,38 @@ func GetAreaInfo(area string) areaInfo {
 
 func unmarshalAreaInfo(body []byte) areaInfo {
 	var info areaInfo
+	err := json.Unmarshal(body, &info)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return info
+}
+
+func GetPokemonInfo(pokemon string) Pokemon {
+	if res, ok := cache.Get("https://pokeapi.co/api/v2/pokemon/" + pokemon); ok {
+		info := unmarshalPokemon(res)
+		return info
+	}
+
+	res, err := http.Get("https://pokeapi.co/api/v2/pokemon/" + pokemon)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode > 299 {
+		log.Fatalf("Failed to fetch pokemon info with status code %d: %s", res.StatusCode, body)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cache.Add("https://pokeapi.co/api/v2/pokemon/"+pokemon, body)
+	return unmarshalPokemon(body)
+}
+
+func unmarshalPokemon(body []byte) Pokemon {
+	var info Pokemon
 	err := json.Unmarshal(body, &info)
 	if err != nil {
 		log.Fatal(err)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"pokedex/internal/pokemon_api"
 	"strings"
@@ -17,6 +18,7 @@ type config struct {
 	areasNext string
 	areasPrev string
 	area      string
+	pokedex   map[string]pokemon_api.Pokemon
 }
 
 var commands map[string]cliCommand
@@ -49,6 +51,11 @@ func init() {
 		name:        "explore <area-id>",
 		description: "Explores the given area",
 		callback:    commandExplore,
+	}
+	commands["catch"] = cliCommand{
+		name:        "catch <pokemon-id>",
+		description: "Attempts to catch the given pokemon",
+		callback:    commandCatch,
 	}
 
 	cfg.areasNext = "https://pokeapi.co/api/v2/location-area/"
@@ -112,6 +119,25 @@ func commandExplore(params ...string) error {
 	fmt.Printf("Exploring %s...\n", area)
 	for _, e := range info.PokemonEncounters {
 		fmt.Println(e.Pokemon.Name)
+	}
+	cfg.area = area
+	return nil
+}
+
+func commandCatch(params ...string) error {
+	if len(params) != 1 {
+		fmt.Println("usage: catch <pokemon-id>")
+		return nil
+	}
+	pokemon := params[0]
+	//info := pokemon_api.GetAreaInfo(cfg.area)
+	pokemonInfo := pokemon_api.GetPokemonInfo(pokemon)
+	fmt.Println("Throwing a pokeball at", pokemon, "...")
+	luck := rand.Intn(700)
+	if luck > pokemonInfo.BaseExperience {
+		fmt.Println("You caught", pokemon)
+	} else {
+		fmt.Println(pokemon, "broke free")
 	}
 	return nil
 }
