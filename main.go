@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -15,7 +17,7 @@ func main() {
 		cleanedInput := cleanInput(input)
 		fmt.Println("--------------------------------")
 		if cmd, ok := commands[cleanedInput[0]]; ok {
-			cmd.callback()
+			cmd.callback(cleanedInput[1:]...)
 		} else {
 			fmt.Println("Unknown command.")
 		}

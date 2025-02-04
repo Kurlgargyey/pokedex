@@ -2,7 +2,6 @@ package pokemon_api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -21,6 +20,16 @@ type areaResponse struct {
 	Areas    []area `json:"results"`
 }
 
+type areaInfo struct {
+	PokemonEncounters []Encounter `json:"pokemon_encounters"`
+}
+type Encounter struct {
+	Pokemon pokemon `json:"pokemon"`
+}
+type pokemon struct {
+	Name string `json:"name"`
+}
+
 var cache *pokecache.Cache
 
 func init() {
@@ -29,7 +38,6 @@ func init() {
 
 func GetAreas(url string) areaResponse {
 	if res, ok := cache.Get(url); ok {
-		fmt.Println("I found this in the cache!")
 		return unmarshalAreas(res)
 	}
 
@@ -47,7 +55,6 @@ func GetAreas(url string) areaResponse {
 	}
 
 	cache.Add(url, body)
-	fmt.Println("The cache contains", len(cache.Entries), "entries.")
 	return unmarshalAreas(body)
 }
 
@@ -58,4 +65,36 @@ func unmarshalAreas(body []byte) areaResponse {
 		log.Fatal(err)
 	}
 	return areas
+}
+
+func GetAreaInfo(area string) areaInfo {
+	if res, ok := cache.Get("https://pokeapi.co/api/v2/location-area/" + area); ok {
+		info := unmarshalAreaInfo(res)
+		return info
+	}
+
+	res, err := http.Get("https://pokeapi.co/api/v2/location-area/" + area)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode > 299 {
+		log.Fatalf("Failed to fetch area info with status code %d: %s", res.StatusCode, body)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cache.Add("https://pokeapi.co/api/v2/location-area/"+area, body)
+	return unmarshalAreaInfo(body)
+}
+
+func unmarshalAreaInfo(body []byte) areaInfo {
+	var info areaInfo
+	err := json.Unmarshal(body, &info)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return info
 }
