@@ -2,9 +2,12 @@ package pokemon_api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"pokedex/internal/pokecache"
+	"time"
 )
 
 type area struct {
@@ -18,7 +21,18 @@ type areaResponse struct {
 	Areas    []area `json:"results"`
 }
 
+var cache *pokecache.Cache
+
+func init() {
+	cache = pokecache.NewCache(5 * time.Minute)
+}
+
 func GetAreas(url string) areaResponse {
+	if res, ok := cache.Get(url); ok {
+		fmt.Println("I found this in the cache!")
+		return unmarshalAreas(res)
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -31,8 +45,15 @@ func GetAreas(url string) areaResponse {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cache.Add(url, body)
+	fmt.Println("The cache contains", len(cache.Entries), "entries.")
+	return unmarshalAreas(body)
+}
+
+func unmarshalAreas(body []byte) areaResponse {
 	var areas areaResponse
-	err = json.Unmarshal(body, &areas)
+	err := json.Unmarshal(body, &areas)
 	if err != nil {
 		log.Fatal(err)
 	}
