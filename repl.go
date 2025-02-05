@@ -60,6 +60,7 @@ func init() {
 
 	cfg.areasNext = "https://pokeapi.co/api/v2/location-area/"
 	cfg.areasPrev = ""
+	cfg.pokedex = make(map[string]pokemon_api.Pokemon)
 }
 
 func cleanInput(text string) []string {
@@ -75,7 +76,7 @@ func commandExit(params ...string) error {
 }
 
 func commandHelp(params ...string) error {
-	commandNames := []string{"map", "mapb", "explore", "help", "exit"}
+	commandNames := []string{"map", "mapb", "explore", "catch", "help", "exit"}
 
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Print("Usage:\n\n")
@@ -132,12 +133,14 @@ func commandCatch(params ...string) error {
 	pokemon := params[0]
 	//info := pokemon_api.GetAreaInfo(cfg.area)
 	pokemonInfo := pokemon_api.GetPokemonInfo(pokemon)
-	fmt.Println("Throwing a pokeball at", pokemon, "...")
-	luck := rand.Intn(700)
-	if luck > pokemonInfo.BaseExperience {
-		fmt.Println("You caught", pokemon)
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonInfo.Name)
+	luck := rand.Float64()
+	chance := 1.0 / (1+(float64(pokemonInfo.BaseExperience)/90))
+	if luck < chance {
+		cfg.pokedex[pokemon] = pokemonInfo
+		fmt.Println("You caught", pokemonInfo.Name)
 	} else {
-		fmt.Println(pokemon, "broke free")
+		fmt.Println(pokemonInfo.Name, "broke free")
 	}
 	return nil
 }

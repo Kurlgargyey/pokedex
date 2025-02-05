@@ -1,17 +1,32 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"os"
+
+	"github.com/chzyer/readline"
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt: "Pokedex >> ",
+		HistoryLimit: 100,
+	})
+	if err != nil {
+		fmt.Println("Error initializing readline:", err)
+		os.Exit(1)
+	}
+	defer rl.Close()
 	for {
-		fmt.Print("Pokedex >> ")
-		scanner.Scan()
-		input := scanner.Text()
+		input, err := rl.Readline()
+		if err == io.EOF {
+			commands["exit"].callback()
+		}
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			os.Exit(1)
+		}
 		cleanedInput := cleanInput(input)
 		fmt.Println("--------------------------------")
 		if cmd, ok := commands[cleanedInput[0]]; ok {
