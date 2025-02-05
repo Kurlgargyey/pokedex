@@ -31,8 +31,26 @@ type pokemonInfo struct {
 }
 
 type Pokemon struct {
-	Name           string `json:"name"`
-	BaseExperience int    `json:"base_experience"`
+	Name           string        `json:"name"`
+	Height         int           `json:"height"`
+	BaseExperience int           `json:"base_experience"`
+	Weight         int           `json:"weight"`
+	Stats          []PokemonStat `json:"stats"`
+	Types          []PokemonType `json:"types"`
+}
+
+type PokemonStat struct {
+	Value   int `json:"base_stat"`
+	Stat struct {
+		Name string `json:"name"`
+	} `json:"stat"`
+}
+
+type PokemonType struct {
+	Slot    int `json:"slot"`
+	Type struct {
+		Name string `json:"name"`
+	} `json:"type"`
 }
 
 var cache *pokecache.Cache

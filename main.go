@@ -10,7 +10,7 @@ import (
 
 func main() {
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt: "Pokedex >> ",
+		Prompt:       "Pokedex >> ",
 		HistoryLimit: 100,
 	})
 	if err != nil {
