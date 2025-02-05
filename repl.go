@@ -64,6 +64,11 @@ func init() {
 		description: "Inspect a Pokémon from your Pokédex",
 		callback:    commandInspect,
 	}
+	commands["pokedex"] = cliCommand{
+		name:        "pokedex",
+		description: "List the Pokémon in your Pokédex",
+		callback:    commandPokedex,
+	}
 
 	cfg.areasNext = "https://pokeapi.co/api/v2/location-area/"
 	cfg.areasPrev = ""
@@ -115,11 +120,11 @@ func parseCommands(rl *readline.Instance) []string {
 }
 
 func processCommand(input []string) {
-	fmt.Println("--------------------------------")
+	fmt.Println("- - - - - - - - - - - - - - - - -")
 	if cmd, ok := commands[input[0]]; ok {
 		cmd.callback(input[1:]...)
 	} else {
 		fmt.Println("Unknown command.")
 	}
-	fmt.Println("--------------------------------")
+	fmt.Println("---------------------------------")
 }

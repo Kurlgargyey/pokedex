@@ -3,7 +3,15 @@ package main
 import "fmt"
 
 func commandHelp(params ...string) error {
-	commandNames := []string{"map", "mapb", "explore", "catch", "help", "exit"}
+	commandNames := []string{
+		"pokedex",
+		"map",
+		"mapb",
+		"explore",
+		"catch",
+		"help",
+		"exit",
+	}
 
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Print("Usage:\n\n")
