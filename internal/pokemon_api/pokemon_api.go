@@ -40,14 +40,14 @@ type Pokemon struct {
 }
 
 type PokemonStat struct {
-	Value   int `json:"base_stat"`
-	Stat struct {
+	Value int `json:"base_stat"`
+	Stat  struct {
 		Name string `json:"name"`
 	} `json:"stat"`
 }
 
 type PokemonType struct {
-	Slot    int `json:"slot"`
+	Slot int `json:"slot"`
 	Type struct {
 		Name string `json:"name"`
 	} `json:"type"`
@@ -69,13 +69,7 @@ func GetAreas(url string) areaResponse {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if res.StatusCode > 299 {
-		log.Fatalf("Failed to fetch areas with status code %d: %s", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := readHTMLBody(res)
 
 	cache.Add(url, body)
 	return unmarshalAreas(body)
@@ -101,13 +95,7 @@ func GetAreaInfo(area string) areaInfo {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if res.StatusCode > 299 {
-		log.Fatalf("Failed to fetch area info with status code %d: %s", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := readHTMLBody(res)
 
 	cache.Add("https://pokeapi.co/api/v2/location-area/"+area, body)
 	return unmarshalAreaInfo(body)
@@ -133,13 +121,7 @@ func GetPokemonInfo(pokemon string) Pokemon {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if res.StatusCode > 299 {
-		log.Fatalf("Failed to fetch pokemon info with status code %d: %s", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := readHTMLBody(res)
 
 	cache.Add("https://pokeapi.co/api/v2/pokemon/"+pokemon, body)
 	return unmarshalPokemon(body)
@@ -152,4 +134,15 @@ func unmarshalPokemon(body []byte) Pokemon {
 		log.Fatal(err)
 	}
 	return info
+}
+
+func readHTMLBody(res *http.Response) []byte {
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode > 299 {
+		log.Fatalf("Failed to fetch pokemon info with status code %d: %s", res.StatusCode, body)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	return body
 }

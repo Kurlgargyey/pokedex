@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"io"
 	"os"
 	"pokedex/internal/pokemon_api"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 type cliCommand struct {
@@ -80,103 +82,44 @@ func commandExit(params ...string) error {
 	return nil
 }
 
-func commandHelp(params ...string) error {
-	commandNames := []string{"map", "mapb", "explore", "catch", "help", "exit"}
-
-	fmt.Println("Welcome to the Pokedex!")
-	fmt.Print("Usage:\n\n")
-	for _, cmd := range commandNames {
-		fmt.Printf("%s - %s\n", commands[cmd].name, commands[cmd].description)
+func repl() {
+	rl := initReadline()
+	defer rl.Close()
+	for {
+		processCommand(parseCommands(rl))
 	}
-	return nil
 }
 
-func commandMap(params ...string) error {
-	res := pokemon_api.GetAreas(cfg.areasNext)
-	cfg.areasNext = res.Next
-	cfg.areasPrev = res.Previous
-	for _, a := range res.Areas {
-		fmt.Println(a.Name)
+func initReadline() *readline.Instance {
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:       "Pokedex >> ",
+		HistoryLimit: 100,
+	})
+	if err != nil {
+		fmt.Println("Error initializing readline:", err)
+		os.Exit(1)
 	}
-	return nil
+	return rl
 }
 
-func commandMapB(params ...string) error {
-	if cfg.areasPrev == "" {
-		fmt.Println("you're on the first page")
-		return nil
+func parseCommands(rl *readline.Instance) []string {
+	input, err := rl.Readline()
+	if err == io.EOF {
+		commands["exit"].callback()
 	}
-	res := pokemon_api.GetAreas(cfg.areasPrev)
-	cfg.areasNext = res.Next
-	cfg.areasPrev = res.Previous
-	for _, a := range res.Areas {
-		fmt.Println(a.Name)
+	if err != nil {
+		fmt.Println("Error reading input:", err)
+		os.Exit(1)
 	}
-	return nil
+	return cleanInput(input)
 }
 
-func commandExplore(params ...string) error {
-	if len(params) != 1 {
-		fmt.Println("usage: explore <area-id>")
-		return nil
-	}
-	area := params[0]
-	info := pokemon_api.GetAreaInfo(area)
-	fmt.Printf("Exploring %s...\n", area)
-	for _, e := range info.PokemonEncounters {
-		fmt.Println(e.Pokemon.Name)
-	}
-	cfg.area = area
-	return nil
-}
-
-func commandCatch(params ...string) error {
-	if len(params) != 1 {
-		fmt.Printf("usage: %s\n", commands["catch"].name)
-		return nil
-	}
-	pokemon := params[0]
-	//info := pokemon_api.GetAreaInfo(cfg.area)
-	pokemonInfo := pokemon_api.GetPokemonInfo(pokemon)
-	fmt.Printf("Throwing a Pokéball at %s...\n", pokemonInfo.Name)
-	luck := rand.Float64()
-	chance := 1.0 / (1 + (float64(pokemonInfo.BaseExperience) / 90))
-	if luck < chance {
-		cfg.pokedex[pokemon] = pokemonInfo
-		fmt.Println("You caught", pokemonInfo.Name)
+func processCommand(input []string) {
+	fmt.Println("--------------------------------")
+	if cmd, ok := commands[input[0]]; ok {
+		cmd.callback(input[1:]...)
 	} else {
-		fmt.Println(pokemonInfo.Name, "broke free")
+		fmt.Println("Unknown command.")
 	}
-	return nil
-}
-
-func commandInspect(params ...string) error {
-	if len(params) != 1 {
-		fmt.Printf("usage: %s\n", commands["inspect"].name)
-		return nil
-	}
-	pokemon := params[0]
-	if pokemonInfo, ok := cfg.pokedex[pokemon]; ok {
-		info := []string{}
-		nameString := fmt.Sprintf("Name: %s", pokemonInfo.Name)
-		info = append(info, nameString)
-		heightString := fmt.Sprintf("Height: %d", pokemonInfo.Height)
-		info = append(info, heightString)
-		weightString := fmt.Sprintf("Weight: %d", pokemonInfo.Weight)
-		info = append(info, weightString)
-		statString := "Stats:\n"
-		for _, stat := range pokemonInfo.Stats {
-			statString += fmt.Sprintf("\t-%s: %d\n", stat.Stat.Name, stat.Value)
-		}
-		info = append(info, statString)
-		typeString := "Types:\n"
-		for _, pokeType := range pokemonInfo.Types {
-			typeString += fmt.Sprintf("\t- %s\n", pokeType.Type.Name)
-		}
-		info = append(info, typeString)
-		fmt.Print(strings.Join(info, "\n"))
-	} else {
-		fmt.Println("You have not caught that Pokémon")
-	}
-	return nil
+	fmt.Println("--------------------------------")
 }

@@ -41,10 +41,7 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 	if !ok {
 		return nil, false
 	}
-	if time.Since(entry.createdAt) > c.interval {
-		delete(c.entries, key)
-		return nil, false
-	}
+	c.reap(key)
 	return entry.value, true
 }
 
@@ -53,10 +50,14 @@ func (c *Cache) reapLoop() {
 		time.Sleep(c.interval)
 		c.mutex.Lock()
 		for key := range c.entries {
-			if time.Since(c.entries[key].createdAt) > c.interval {
-				delete(c.entries, key)
-			}
+			c.reap(key)
 		}
 		c.mutex.Unlock()
+	}
+}
+
+func (c *Cache) reap(key string) {
+	if time.Since(c.entries[key].createdAt) > c.interval {
+		delete(c.entries, key)
 	}
 }
